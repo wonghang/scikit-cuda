@@ -15,7 +15,8 @@ import warnings
 
 import numpy as np
 
-import cuda
+from . import cuda
+from . import utils
 
 # Load library:
 _version_list = [10.1, 10.0, 9.2, 9.1, 9.0, 8.0, 7.5, 7.0, 6.5, 6.0, 5.5, 5.0, 4.0]
@@ -454,14 +455,14 @@ _libcusparse.cusparseDcsrmv.argtypes = [ctypes.c_int, # handle
                                         ctypes.c_int, # m
                                         ctypes.c_int, # n
                                         ctypes.c_int, # nnz
-                                        ctypes.c_double_p, # alpha
+                                        ctypes.c_void_p, # alpha
                                         cusparseMatDescr, # descrA
-                                        ctypes.c_double_p, # csrValA
-                                        ctypes.c_int_p, # csrRowPtrA
-                                        ctypes_c_int_p, # csrColIndA
-                                        ctypes_c_double_p, # x
-                                        ctypes_c_double_p, # beta
-                                        ctypes_c_double_p] # y
+                                        ctypes.c_void_p, # csrValA
+                                        ctypes.c_void_p, # csrRowPtrA
+                                        ctypes.c_void_p, # csrColIndA
+                                        ctypes.c_void_p, # x
+                                        ctypes.c_void_p, # beta
+                                        ctypes.c_void_p] # y
 
 def cusparseDcsrmv(handle, transA, m, n, nnz, alpha,
                    descrA, csrValA, csrRowPtrA, csrColIndA,
