@@ -85,6 +85,10 @@ class cusparseStatusMatrixTypeNotSupported(cusparseError):
     """The matrix type is not supported by this function"""
     pass
 
+class cusparseStatusZeroPivot(cusparseError):
+    """FIXME"""
+    pass
+
 cusparseExceptions = {
     1: cusparseStatusNotInitialized,
     2: cusparseStatusAllocFailed,
@@ -94,33 +98,87 @@ cusparseExceptions = {
     6: cusparseStatusExecutionFailed,
     7: cusparseStatusInternalError,
     8: cusparseStatusMatrixTypeNotSupported,
+    9: cusparseStatusZeroPivot,
     }
 
-# Matrix types:
+# cudaDatatype_t
+CUDA_R_16F= 2
+CUDA_C_16F= 6
+CUDA_R_32F= 0
+CUDA_C_32F= 4
+CUDA_R_64F= 1
+CUDA_C_64F= 5
+CUDA_R_8I = 3
+CUDA_C_8I = 7
+CUDA_R_8U = 8
+CUDA_C_8U = 9
+CUDA_R_32I= 10
+CUDA_C_32I= 11
+CUDA_R_32U= 12
+CUDA_C_32U= 1
+
+# cusparsePointerMode_t
+CUSPARSE_POINTER_MODE_HOST = 0
+CUSPARSE_POINTER_MODE_DEVICE = 1
+
+# cusparseAction_t
+CUSPARSE_ACTION_SYMBOLIC = 0
+CUSPARSE_ACTION_NUMERIC = 1
+
+# Matrix types
+# cusparseMatrixType_t
 CUSPARSE_MATRIX_TYPE_GENERAL = 0
 CUSPARSE_MATRIX_TYPE_SYMMETRIC = 1
 CUSPARSE_MATRIX_TYPE_HERMITIAN = 2
 CUSPARSE_MATRIX_TYPE_TRIANGULAR = 3
 
+# cusparseFillMode_t
 CUSPARSE_FILL_MODE_LOWER = 0
 CUSPARSE_FILL_MODE_UPPER = 1
 
 # Whether or not a matrix' diagonal entries are unity:
+# cusparseDisagType_t
 CUSPARSE_DIAG_TYPE_NON_UNIT = 0
 CUSPARSE_DIAG_TYPE_UNIT = 1
 
 # Matrix index bases:
+# cusparseIndexBase_t
 CUSPARSE_INDEX_BASE_ZERO = 0
 CUSPARSE_INDEX_BASE_ONE = 1
 
 # Operation types:
+# cusparseOperation_t
 CUSPARSE_OPERATION_NON_TRANSPOSE = 0
 CUSPARSE_OPERATION_TRANSPOSE = 1
 CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE = 2
 
 # Whether or not to parse elements of a dense matrix row or column-wise.
+# cusparseDirection_t
 CUSPARSE_DIRECTION_ROW = 0
 CUSPARSE_DIRECTION_COLUMN = 1
+
+# cusparseHybPartition_t
+CUSPARSE_HYB_PARTITION_AUTO = 0
+CUSPARSE_HYB_PARTITION_USER = 1
+CUSPARSE_HYB_PARTITION_MAX = 2
+
+# cusparseSolvePolicy_t
+CUSPARSE_SOLVE_POLICY_NO_LEVEL = 0
+CUSPARSE_SOLVE_POLICY_USE_LEVEL = 1
+
+# cusparseSideMode_t
+CUSPARSE_SIDE_LEFT = 0
+CUSPARSE_SIDE_RIGHT = 1
+
+# cusparseColorAlg_t
+CUSPARSE_COLOR_ALG0 = 0
+CUSPARSE_COLOR_ALG1 = 1
+
+# cusparseAlgMode_t
+CUSPARSE_ALG0 = 0
+CUSPARSE_ALG1 = 1
+CUSPARSE_ALG_NAIVE = 0,
+CUSPARSE_ALG_MERGE_PATH = 1
 
 # Helper functions:
 class cusparseMatDescr(ctypes.Structure):
@@ -361,8 +419,12 @@ def cusparseSnnz(handle, dirA, m, n, descrA, A, lda,
     """
 
     # Unfinished:
-    nnzPerRowColumn = gpuarray.empty()
-    nnzTotalDevHostPtr = gpuarray.empty()
+    if dirA == CUSPARSE_DIRECTION_ROW:
+        nnzPerRowColumn = gpuarray.empty((m,),dtype=np.int32)
+    elif dirA == CUSPARSE_DIRECTION_COLUMN:
+        nnzPerRowColumn = gpuarray.empty((n,),dtype=np.int32)
+    else:
+        raise ValueError("Unknown dirA")
 
     status = _libcusparse.cusparseSnnz(handle, dirA, m, n, 
                                        descrA, int(A), lda,
@@ -385,3 +447,27 @@ def cusparseSdense2csr(handle, m, n, descrA, A, lda,
                        nnzPerRow, csrValA, csrRowPtrA, csrColIndA):
     # Unfinished
     pass
+
+_libcusparse.cusparseDcsrmv.restype = int
+_libcusparse.cusparseDcsrmv.argtypes = [ctypes.c_int, # handle
+                                        ctypes.c_int, # transA
+                                        ctypes.c_int, # m
+                                        ctypes.c_int, # n
+                                        ctypes.c_int, # nnz
+                                        ctypes.c_double_p, # alpha
+                                        cusparseMatDescr, # descrA
+                                        ctypes.c_double_p, # csrValA
+                                        ctypes.c_int_p, # csrRowPtrA
+                                        ctypes_c_int_p, # csrColIndA
+                                        ctypes_c_double_p, # x
+                                        ctypes_c_double_p, # beta
+                                        ctypes_c_double_p] # y
+
+def cusparseDcsrmv(handle, transA, m, n, nnz, alpha,
+                   descrA, csrValA, csrRowPtrA, csrColIndA,
+                   x,beta,y):
+    status = _libcusparse.cusparseDcsrmv(handle, transA, m, n,  nnz,
+                                         int(alpha), descrA, int(csrValA),
+                                         int(csrRowPtrA), int(csrColIndA),
+                                         int(x),int(beta),int(y))
+    cusparseCheckStatus(status)
