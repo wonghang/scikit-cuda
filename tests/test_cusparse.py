@@ -57,7 +57,7 @@ class test_cusparse(TestCase):
         gpu_data = gpuarray.to_gpu(data)
         gpu_y = gpuarray.to_gpu(y)
         gpu_result_matvec = gpuarray.empty((m,),dtype=np.float64)
-        gpu_result_rmatvec = gpuarray.empty((m,),dtype=np.float64)
+        gpu_result_rmatvec = gpuarray.empty((n,),dtype=np.float64)
         
         descrA = cusparse.cusparseCreateMatDescr()
         cusparse.cusparseSetMatType(descrA,cusparse.CUSPARSE_MATRIX_TYPE_GENERAL)
