@@ -181,15 +181,6 @@ CUSPARSE_ALG1 = 1
 CUSPARSE_ALG_NAIVE = 0,
 CUSPARSE_ALG_MERGE_PATH = 1
 
-# Helper functions:
-class cusparseMatDescr(ctypes.Structure):
-    _fields_ = [
-        ('MatrixType', ctypes.c_int),
-        ('FillMode', ctypes.c_int),
-        ('DiagType', ctypes.c_int),
-        ('IndexBase', ctypes.c_int)
-        ]
-
 def cusparseCheckStatus(status):
     """
     Raise CUSPARSE exception
@@ -300,7 +291,7 @@ def cusparseSetStream(handle, id):
     cusparseCheckStatus(status)
 
 _libcusparse.cusparseCreateMatDescr.restype = int
-_libcusparse.cusparseCreateMatDescr.argtypes = [cusparseMatDescr]
+_libcusparse.cusparseCreateMatDescr.argtypes = [ctypes.c_void_p]
 def cusparseCreateMatDescr():
     """
     Initialize a sparse matrix descriptor.
@@ -316,13 +307,13 @@ def cusparseCreateMatDescr():
 
     """
 
-    desc = cusparseMatrixDesc()
+    desc = ctypes.c_void_p()
     status = _libcusparse.cusparseCreateMatDescr(ctypes.byref(desc))
     cusparseCheckStatus(status)
     return desc
 
 _libcusparse.cusparseDestroyMatDescr.restype = int
-_libcusparse.cusparseDestroyMatDescr.argtypes = [ctypes.c_int]
+_libcusparse.cusparseDestroyMatDescr.argtypes = [ctypes.c_void_p]
 def cusparseDestroyMatDescr(desc):
     """
     Releases the memory allocated for the matrix descriptor.
@@ -338,7 +329,7 @@ def cusparseDestroyMatDescr(desc):
     cusparseCheckStatus(status)
 
 _libcusparse.cusparseSetMatType.restype = int
-_libcusparse.cusparseSetMatType.argtypes = [cusparseMatDescr,
+_libcusparse.cusparseSetMatType.argtypes = [ctypes.c_void_p,
                                             ctypes.c_int]
 def cusparseSetMatType(desc, type):
     """
@@ -357,7 +348,7 @@ def cusparseSetMatType(desc, type):
     cusparseCheckStatus(status)
 
 _libcusparse.cusparseGetMatType.restype = int
-_libcusparse.cusparseGetMatType.argtypes = [cusparseMatDescr]    
+_libcusparse.cusparseGetMatType.argtypes = [ctypes.c_void_p]    
 def cusparseGetMatType(desc):
     """
     Gets the matrix type of the specified matrix.
@@ -376,13 +367,56 @@ def cusparseGetMatType(desc):
 
     return _libcusparse.cusparseGetMatType(desc)
 
+_libcusparse.cusparseSetMatDiagType.restype = int
+_libcusparse.cusparseSetMatDiagType.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_int]
+def cusparseSetMatDiagType(desc, type):
+    status = _libcusparse.cusparseSetMatDiagType(desc, type)
+    cusparseCheckStatus(status)
+
+_libcusparse.cusparseGetMatDiagType.restype = int
+_libcusparse.cusparseGetMatDiagType.argtypes = [ctypes.c_void_p]    
+def cusparseGetMatDiagType(desc):
+    return _libcusparse.cusparseGetMatDiagType(desc)
+
+_libcusparse.cusparseSetMatFillMode.restype = int
+_libcusparse.cusparseSetMatFillMode.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_int]
+def cusparseSetMatFillMode(desc, type):
+    status = _libcusparse.cusparseSetMatFillMode(desc, type)
+    cusparseCheckStatus(status)
+
+_libcusparse.cusparseGetMatFillMode.restype = int
+_libcusparse.cusparseGetMatFillMode.argtypes = [ctypes.c_void_p]    
+def cusparseGetMatFillMode(desc):
+    return _libcusparse.cusparseGetMatFillMode(desc)
+
+_libcusparse.cusparseSetMatIndexBase.restype = int
+_libcusparse.cusparseSetMatIndexBase.argtypes = [ctypes.c_void_p,
+                                                ctypes.c_int]
+def cusparseSetMatIndexBase(desc, type):
+    status = _libcusparse.cusparseSetMatIndexBase(desc, type)
+    cusparseCheckStatus(status)
+
+_libcusparse.cusparseGetMatIndexBase.restype = int
+_libcusparse.cusparseGetMatIndexBase.argtypes = [ctypes.c_void_p]    
+def cusparseGetMatIndexBase(desc):
+    return _libcusparse.cusparseGetMatIndexBase(desc)
+
+_libcusparse.cusparseSetPointerMode.restype = int
+_libcusparse.cusparseSetPointerMode.argtypes = [ctypes.c_int,
+                                                ctypes.c_int]
+def cusparseSetPointerMode(handle, mode):
+    status = _libcusparse.cusparseSetPointerMode(handle,mode)
+    cusparseCheckStatus(status)
+
 # Format conversion functions:
 _libcusparse.cusparseSnnz.restype = int
 _libcusparse.cusparseSnnz.argtypes = [ctypes.c_int,
                                       ctypes.c_int,
                                       ctypes.c_int,
                                       ctypes.c_int,
-                                      cusparseMatDescr,
+                                      ctypes.c_void_p,
                                       ctypes.c_void_p,
                                       ctypes.c_int,
                                       ctypes.c_void_p,
@@ -437,7 +471,7 @@ _libcusparse.cusparseSdense2csr.restype = int
 _libcusparse.cusparseSdense2csr.argtypes = [ctypes.c_int,
                                             ctypes.c_int,
                                             ctypes.c_int,
-                                            cusparseMatDescr,
+                                            ctypes.c_void_p,
                                             ctypes.c_void_p,
                                             ctypes.c_int,
                                             ctypes.c_void_p,
@@ -447,7 +481,7 @@ _libcusparse.cusparseSdense2csr.argtypes = [ctypes.c_int,
 def cusparseSdense2csr(handle, m, n, descrA, A, lda, 
                        nnzPerRow, csrValA, csrRowPtrA, csrColIndA):
     # Unfinished
-    pass
+    raise NotImplementedError
 
 _libcusparse.cusparseDcsrmv.restype = int
 _libcusparse.cusparseDcsrmv.argtypes = [ctypes.c_int, # handle
@@ -456,7 +490,7 @@ _libcusparse.cusparseDcsrmv.argtypes = [ctypes.c_int, # handle
                                         ctypes.c_int, # n
                                         ctypes.c_int, # nnz
                                         ctypes.c_void_p, # alpha
-                                        cusparseMatDescr, # descrA
+                                        ctypes.c_void_p, # descrA
                                         ctypes.c_void_p, # csrValA
                                         ctypes.c_void_p, # csrRowPtrA
                                         ctypes.c_void_p, # csrColIndA
@@ -467,8 +501,10 @@ _libcusparse.cusparseDcsrmv.argtypes = [ctypes.c_int, # handle
 def cusparseDcsrmv(handle, transA, m, n, nnz, alpha,
                    descrA, csrValA, csrRowPtrA, csrColIndA,
                    x,beta,y):
+    # 
     status = _libcusparse.cusparseDcsrmv(handle, transA, m, n,  nnz,
-                                         int(alpha), descrA, int(csrValA),
+                                         ctypes.byref(ctypes.c_double(alpha)),
+                                         descrA, int(csrValA),
                                          int(csrRowPtrA), int(csrColIndA),
-                                         int(x),int(beta),int(y))
+                                         int(x),ctypes.byref(ctypes.c_double(beta)),int(y))
     cusparseCheckStatus(status)
