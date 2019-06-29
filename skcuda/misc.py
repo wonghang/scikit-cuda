@@ -192,7 +192,7 @@ def init(allocator=drv.mem_alloc):
     if not _global_cusparse_handle:
         from . import cusparse
         _global_cusparse_handle = cusparse.cusparseCreate()
-        cusparse.cusparseSetPointerMode(cls.cusparse_handle,cusparse.CUSPARSE_POINTER_MODE_HOST)
+        cusparse.cusparseSetPointerMode(_global_cusparse_handle,cusparse.CUSPARSE_POINTER_MODE_HOST)
     # culaSelectDevice() need not (and, in fact, cannot) be called
     # here because the host thread has already been bound to a GPU
     # device:
