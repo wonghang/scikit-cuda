@@ -23,6 +23,7 @@ import numpy as np
 
 from . import cuda
 from . import cublas
+from . import cusparse
 
 import sys
 if sys.version_info < (3,):
@@ -144,6 +145,8 @@ def done_context(ctx):
 
 global _global_cublas_handle
 _global_cublas_handle = None
+global _global_cusparse_handle
+_global_cusparse_handle = None
 global _global_cusolver_handle
 _global_cusolver_handle = None
 global _global_cublas_allocator
@@ -185,6 +188,11 @@ def init(allocator=drv.mem_alloc):
         from . import cusolver
         _global_cusolver_handle = cusolver.cusolverDnCreate()
 
+    global _global_cusparse_handle
+    if not _global_cusparse_handle:
+        from . import cusparse
+        _global_cusparse_handle = cusparse.cusparseCreate()
+        cusparse.cusparseSetPointerMode(cls.cusparse_handle,cusparse.CUSPARSE_POINTER_MODE_HOST)
     # culaSelectDevice() need not (and, in fact, cannot) be called
     # here because the host thread has already been bound to a GPU
     # device:
@@ -214,6 +222,12 @@ def shutdown():
         from . import cusolver
         cusolver.cusolverDnDestroy(_global_cusolver_handle)
         _global_cusolver_handle = None
+
+    global _global_cusparse_handle
+    if _global_cusparse_handle:
+        from . import cusparse
+        cusparse.cusparseDestroy(cls.cusparse_handle)
+        _global_cusparse_handle = None
 
     if _has_magma:
         magma.magma_finalize()
